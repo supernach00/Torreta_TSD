@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build AVR",
+            "type": "shell",
+            "command": "make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Flash AVR",
+            "type": "shell",
+            "command": "make flash",
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}
