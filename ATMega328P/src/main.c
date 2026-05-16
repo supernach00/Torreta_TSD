@@ -42,14 +42,18 @@ ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 	int main(void)
 	{
 		
-		setup_ADC();
-		setup_PWM();
-		setup_SWITCHS();
-		USART_init();
+		PWM_TIM1_init(20);
+		PWM_set_DC(50);
+
 		sei();
 		
 		while (1)
 		{
+
+			uint8_t delta_dc = 1;
+			Delay_ms(10000);
+			PWM_set_DC(50 + delta_dc);
+
 
 		}
 
