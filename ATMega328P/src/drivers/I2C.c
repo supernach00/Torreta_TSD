@@ -2,21 +2,20 @@
 
 void I2C_init(void){
 
-    // Prescaler = 1
-    TWSR = 0x00;
-
-    // 100kHz
-    TWBR = 72;
-
-    // Habilitar TWI
-    TWCR = (1 << TWEN);
-
-    // Pines como entrada 
+    // SDA/SCL entradas
     DDRC &= ~((1 << PC4) | (1 << PC5));
 
+    // prescaler
+    TWSR = 0x00;
+
+    // clock MUY lento
+    TWBR = 255;
+
+    // enable TWI
+    TWCR = (1 << TWEN);
 }
 
-void I2C_start(void){
+I2C_ERROR_e I2C_start(void){
 
     // START + enable
     TWCR = (1 << TWINT) | // Limpio flag de start terminada
@@ -25,6 +24,15 @@ void I2C_start(void){
 
     // Esperar fin
     while(!(TWCR & (1 << TWINT)));
+
+    // Manejo de error
+    if ((TWSR & 0xF8) != 0x08){
+
+        return I2C_ERROR_START;
+   
+    }
+
+    return I2C_ERROR_OK;
 }
 
 void I2C_write_address(uint8_t address, I2C_RW_e rw){

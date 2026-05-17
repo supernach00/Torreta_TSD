@@ -18,6 +18,9 @@ typedef enum {
 #define A 16000.0 / (5.0*1000.0)
 #define C  4.88 // C = 5000mV / 1024;
 
+//Debug
+void DEBUG_init();
+
 //inits
 void ADC_init(void); // Inicializa el ADC para leer el pin ADC5 (A5) con referencia de 5V y un prescaler de 128.
 void PWM_TIM1_init(uint16_t period); // Configura el Timer1 para generar una señal PWM en el pin PB1 con un periodo pasado como argumento (en ms).

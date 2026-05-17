@@ -129,11 +129,11 @@ void PWM_TIM1_init(uint16_t period){
 
 	COMPARADOR PERIODO = ICR1 
 	COMPARADOR DC = OCR1A
-	PIN DE  SALIDA = PB1
+	PIN DE  SALIDA = PB1, PB2
 	DC INICIAL = 0%
 	*/
 	
-	// Configurar PB1 como salida
+	// Configurar PB1, PB2 como salida
 	DDRB |= (1 << PB1); // OC1A = PB1 en Arduino Uno
 	DDRB |= (1 << PB2); // OC1B = PB2 en Arduino Uno
 
@@ -159,5 +159,9 @@ void PWM_set_DC(uint16_t duty_cycle){
 	OCR1A = (ICR1 * duty_cycle) / 100; // Convertir porcentaje a valor de comparación (0-1023)
 
 	}
+
+void DEBUG_init(){
+	DDRB |= (1 << PB0);
+}
 
 	
