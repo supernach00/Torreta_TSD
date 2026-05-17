@@ -15,7 +15,7 @@ PORT=/dev/ttyUSB0
 AVRDUDE = avrdude
 
 # Source files
-SRC = $(wildcard src/*.c)
+SRC := $(shell find src -name "*.c")
 
 # Included directories
 INCLUDE_DIR = include

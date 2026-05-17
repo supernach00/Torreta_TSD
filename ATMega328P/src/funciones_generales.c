@@ -124,8 +124,8 @@ void PWM_TIM1_init(uint16_t period){
 	/*
 	TIMER = 1
 	MODO = FAST PWM
-	PRESCALER = 1024 (f = 15625Hz)
-	1ms equivale a 15.625 ciclos de reloj
+	PRESCALER = 8 (f = 2MHz)
+	1ms equivale a 2000 ciclos de reloj
 
 	COMPARADOR PERIODO = ICR1 
 	COMPARADOR DC = OCR1A
@@ -135,25 +135,29 @@ void PWM_TIM1_init(uint16_t period){
 	
 	// Configurar PB1 como salida
 	DDRB |= (1 << PB1); // OC1A = PB1 en Arduino Uno
+	DDRB |= (1 << PB2); // OC1B = PB2 en Arduino Uno
 
 	// Modo Fast PWM con ICR1 como TOP, prescaler 1024.
-	TCCR1A = (1 << WGM11) | (1 << COM1A1);
-	TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS10) | (1 << CS12); // 
+	TCCR1A = (1 << WGM11) | (1 << COM1A1) | (1 << COM1B1);
+	TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS11);  
 	//TIMSK1 |= (1 << TOIE1);
 	
 	// Establecer el periodo de la señal PWM
 
-	ICR1 = period * 16.625; // Convertir ms a ciclos de reloj (f = 15625Hz, 1ms = 15.625 ciclos)
+	ICR1 = (period * 2000) - 1; // Convertir ms a ciclos de reloj (f = 15625Hz, 1ms = 15.625 ciclos)
+	// ICR1 = 311; // Convertir ms a ciclos de reloj (f = 15625Hz, 1ms = 15.625 ciclos)
 
 	// Establecer el ciclo de trabajo inicial al 0%
-	OCR1A = 1;  // Valor inicial de ciclo de trabajo.
+	OCR1A = 0;  // Valor inicial de ciclo de trabajo.
+
 	}
 
 void PWM_set_DC(uint16_t duty_cycle){
 	
 	// Esta funcion actualiza el ciclo de trabajo (DC) de la señal PWM en el pin PB1.
 
-	OCR1A = (uint16_t)((duty_cycle * 1024) / 100) + 1; // Convertir porcentaje a valor de comparación (0-1023)
+	OCR1A = (ICR1 * duty_cycle) / 100; // Convertir porcentaje a valor de comparación (0-1023)
 
 	}
+
 	

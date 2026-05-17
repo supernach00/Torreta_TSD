@@ -5,13 +5,23 @@
  * Author : nachinux
  */ 
 
-#include "UART.h"
-#include "funciones_generales.h"
 
+//Librerias estandar C
+#include <stdio.h>
+
+//Librerias AVR
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
-#include <stdio.h>
+
+//Utils
+#include "funciones_generales.h"
+
+//Drivers
+#include "drivers/I2C.h"
+
+//Devices
+#include "devices/MG996R.h"
 
 ISR(TIMER2_COMPA_vect) 
 {
@@ -43,16 +53,13 @@ ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 	{
 		
 		PWM_TIM1_init(20);
-		PWM_set_DC(50);
+		I2C_init();
+		I2C_start();
 
 		sei();
 		
 		while (1)
 		{
-
-			uint8_t delta_dc = 1;
-			Delay_ms(10000);
-			PWM_set_DC(50 + delta_dc);
 
 
 		}

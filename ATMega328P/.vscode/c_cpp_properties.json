@@ -5,7 +5,9 @@
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/**",
-                "/usr/avr/include"
+                "/usr/lib/avr/include"
+
+                
             ],
             "defines": [
                 "_DEBUG",
