@@ -61,7 +61,7 @@ ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 		{
 
 		I2C_start();
-		I2C_write_address(0x52, I2C_WRITE);
+		I2C_connect_address(0x52, I2C_WRITE);
 		PORTB ^= (1 << PB0);
 		_delay_ms(3000);
 
