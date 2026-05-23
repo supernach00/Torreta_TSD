@@ -1,6 +1,8 @@
 #include "drivers/I2C.h"
 
 // TODO: Agregar una funcion de manejor de errores y definir codigos con enums.
+//SDA = A4
+//SCL = A5
 
 I2C_ERROR_e I2C_init(void){
 
@@ -13,6 +15,7 @@ I2C_ERROR_e I2C_init(void){
     // 100kHz con f_cpu = 16MHz
     // formula = 16MHz / (16 + 2*TWBR*prescaler) = 100kHz -> TWBR = 72
     TWBR = 72;
+    // TWBR = 255;
  
     // enable TWI
     TWCR = (1 << TWEN);

@@ -16,7 +16,6 @@ void NUN_init(){
         Error_Handler();
     }
 
-    // The initialization consists of two write transactions, each of which writes a single byte to a register
     // internal to the I2C slave: reg[0xf0]=0x55, reg[0xfb]= 0x00. Normally this done once only.
 
     I2C_connect_address(NUN_ID_WRITE, I2C_WRITE);
