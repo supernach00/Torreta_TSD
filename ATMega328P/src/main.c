@@ -25,8 +25,8 @@
 
 //Devices
 #include "devices/MG996R.h"
-#include "API_vl53l0x/vl53l0x_api.h"
-#include "devices/nunchuck.h"
+#include "devices/nunchuk.h"
+#include "devices/vl53l0x.h"
 
 ISR(TIMER2_COMPA_vect) 
 {
@@ -57,11 +57,10 @@ ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 	int main(void)
 	{
 		
-		// PWM_TIM1_init(20);
+		PWM_TIM1_init(20);
 		I2C_init();
 		_delay_ms(5000);
 		USART_init();
-		VL53L0X_DataInit();
 
 		DEBUG_init();
 		sei();
