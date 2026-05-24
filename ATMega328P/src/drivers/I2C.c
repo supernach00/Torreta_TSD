@@ -1,5 +1,17 @@
 #include "drivers/I2C.h"
 
+// #define I2C_TIMEOUT_CYCLES 65000UL
+
+// static uint8_t I2C_wait_twint(void){
+//     uint32_t timeout = I2C_TIMEOUT_CYCLES;
+//     while (!(TWCR & (1 << TWINT))){
+//         if (timeout-- == 0){
+//             return 0;
+//         }
+//     }
+//     return 1;
+// }
+
 // TODO: Agregar una funcion de manejor de errores y definir codigos con enums.
 //SDA = A4
 //SCL = A5
@@ -54,20 +66,19 @@ I2C_ERROR_e I2C_connect_address(uint8_t address, I2C_RW_e rw){
     // Espero fin
     while(!(TWCR & (1 << TWINT))); // No tengo que tocar el flag de TWINT!!!
 
-    //Verifico el ACK y manejo errores.
-    if ( (TWSR & 0xF8) != 0x18 ){ //Checkeo el status register, maskeo bits del prescaler.
-
-        return I2C_ERROR_WRITE_ADDRESS;
-
-    } if ( (TWSR & 0xF8) != 0x48 ){ //Checkeo el status register, maskeo bits del prescaler.
-
-        return I2C_ERROR_READ_ADDRESS;
-    
+    //Verifico el ACK y manejo errores según si es escritura o lectura
+    uint8_t status = TWSR & 0xF8;
+    if (rw == I2C_WRITE){
+        if (status != 0x18){ // SLA+W transmitted, ACK received
+            return I2C_ERROR_WRITE_ADDRESS;
+        }
     } else {
-
-        return I2C_ERROR_OK;
-
+        if (status != 0x40){ // SLA+R transmitted, ACK received
+            return I2C_ERROR_READ_ADDRESS;
+        }
     }
+
+    return I2C_ERROR_OK;
 }
 
 I2C_ERROR_e I2C_write(uint8_t data){

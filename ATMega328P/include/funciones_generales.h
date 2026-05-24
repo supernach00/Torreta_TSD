@@ -20,6 +20,7 @@ typedef enum {
 
 //Debug
 void DEBUG_init();
+void DEBUG_led_toggle();
 
 //inits
 void ADC_init(void); // Inicializa el ADC para leer el pin ADC5 (A5) con referencia de 5V y un prescaler de 128.

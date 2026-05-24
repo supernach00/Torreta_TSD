@@ -161,7 +161,10 @@ void PWM_set_DC(uint16_t duty_cycle){
 	}
 
 void DEBUG_init(){
-	DDRB |= (1 << PB0);
+	DDRB |= (1 << PB5);
 }
 
+void DEBUG_led_toggle(){
+	PORTB ^= (1 << PB5);
+}
 	

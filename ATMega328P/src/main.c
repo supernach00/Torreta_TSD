@@ -20,7 +20,6 @@
 #include "funciones_generales.h"
 
 //Drivers
-#include "drivers/I2C.h"
 #include "drivers/UART.h"
 
 //Devices
@@ -57,30 +56,35 @@ ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 	int main(void)
 	{
 		
-		PWM_TIM1_init(20);
-		I2C_init();
-		_delay_ms(5000);
-		USART_init();
+		// PWM_TIM1_init(20);
+		// USART_init();
+		NUN_init();
+		sei();
+		// uint8_t buf[NUN_DATA_SIZE];
+		// NUN_get_raw(buf);
+
+		// _delay_ms(5000);
+
+		// if (buf[0] != 0 || buf[1] != 0 || buf[2] != 0 || buf[3] != 0 || buf[4] != 0 || buf[5] != 0){
+		// 	USART_putstring("Nunchuk data received:\n");
+		// 	for (int i = 0; i < NUN_DATA_SIZE; i++){
+		// 		char str[4];
+		// 		sprintf(str, "%d ", buf[i]);
+		// 		USART_putstring(str);
+		// 	}
+		// 	USART_putstring("\n");
+		// }
 
 		DEBUG_init();
-		sei();
-		
 		while (1)
 		{
 
-			USART_putstring("buenas chambales\r\n");
-			_delay_ms(5000);
-			uint8_t status = VL53L0X_test();
-			if (status) {
-				USART_putstring("laser ok\r\n");
-			} else {
-				USART_putstring("laser not ok\r\n");
-			}
-				USART_putstring("uno\r\n");
-			_delay_ms(1000);
-				USART_putstring("dos\r\n");
-			_delay_ms(1000);
 
+		DEBUG_led_toggle();
+		_delay_ms(1000);
+		// NUN_get_raw(buf);
+		// I2C_start();
+		// I2C_connect_address(NUN_ADDRESS, I2C_WRITE);
 		}
 
 		return 0;
