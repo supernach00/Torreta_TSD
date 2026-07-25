@@ -18,6 +18,16 @@ void SERVO_set_angulo(uint16_t angulo, servo_e servo){ // Centecimas de grados, 
 
 }
 
+// SERVO_get_change(uint8_t *buf){
+
+// 	uint16_t angulo_hor = (buf[0] << 8) | buf[1];
+// 	uint16_t angulo_ver = (buf[2] << 8) | buf[3];
+
+// 	SERVO_set_angulo(angulo_hor, SERVO_HOR);
+// 	SERVO_set_angulo(angulo_ver, SERVO_VER);
+
+// }
+
 void SERVO_test(servo_e servoA, servo_e servoB){
 
 	int i = 0;

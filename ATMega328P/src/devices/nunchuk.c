@@ -1,18 +1,5 @@
 #include "devices/nunchuk.h"
 
-#ifdef NUNCHUK_BLACK
-
-    #define COMMAND_1 0xF0
-    #define COMMAND_2 0x55
-    #define COMMAND_3 0xFB
-    #define COMMAND_4 0x00
-
-#else
-
-    #define COMMAND_1 0x40
-    #define COMMAND_2 0x00
-
-#endif
 
 NUN_ERROR_e NUN_init(){
 
@@ -20,10 +7,25 @@ NUN_ERROR_e NUN_init(){
 
     // internal to the I2C slave: reg[0xf0]=0x55, reg[0xfb]= 0x00. Normally this done once only.
 
-    I2C_start();
-    I2C_connect_address(NUN_ADDRESS, I2C_WRITE);
-    I2C_write(COMMAND_1); // Escribo en este registro
-    I2C_write(COMMAND_2); // Este valor
+    if (I2C_start() != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_INIT;
+    }
+
+    if (I2C_connect_address(NUN_ADDRESS, I2C_WRITE) != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_CONNECT;
+
+    }
+
+    if (I2C_write(COMMAND_1) != I2C_ERROR_OK){ // Escribo en este registro
+        I2C_stop();
+        return NUN_ERROR_WRITE_DATA;
+    }
+    if (I2C_write(COMMAND_2) != I2C_ERROR_OK){ // Este valor
+        I2C_stop();
+        return NUN_ERROR_WRITE_DATA;
+    }
 
     I2C_stop();
 
@@ -31,10 +33,23 @@ NUN_ERROR_e NUN_init(){
 
     #ifdef NUNCHUK_BLACK
 
-    I2C_start(); // Genero otra start condition
-    I2C_connect_address(NUN_ADDRESS, I2C_WRITE);
-    I2C_write(COMMAND_3); // Escribo en este registro
-    I2C_write(COMMAND_4); // Este valor
+    if (I2C_start() != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_WRITE_DATA;
+    }
+    if (I2C_connect_address(NUN_ADDRESS, I2C_WRITE) != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_WRITE_DATA;
+    }
+
+    if (I2C_write(COMMAND_3) != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_WRITE_DATA;
+    }
+    if (I2C_write(COMMAND_4) != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_WRITE_DATA;
+    }
 
     I2C_stop();
 
@@ -45,25 +60,38 @@ NUN_ERROR_e NUN_init(){
     // The read process consists of writing a 0 and then reading 6 bytes of data.
     // Send this command to get all sensor data and store into the 6-byte register within Nunchuk
     // controller. This must be executed before reading data from the Nunchuk
-    uint8_t buf[NUN_DATA_SIZE];
-    NUN_get_raw(buf);
+    // uint8_t buf[NUN_DATA_SIZE];
+    // NUN_get_raw(buf);
 
     return NUN_ERROR_OK;
 }
 
-void NUN_get_raw(uint8_t read_buffer[NUN_DATA_SIZE]){
+NUN_ERROR_e NUN_get_raw(uint8_t read_buffer[NUN_DATA_SIZE]){
 
     // Send the slave ID for reading (0xA5) and wait for the stream data 6-byte from the Nunchuk.
 
-    I2C_start();
-    I2C_connect_address(NUN_ADDRESS, I2C_WRITE);
-    I2C_write(0x00); 
-    I2C_stop();
+    if (I2C_start() != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_START;
+    }
+    
+    if (I2C_connect_address(NUN_ADDRESS, I2C_WRITE) != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_CONNECT;
+    }
+    if (I2C_write(0x00) != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_WRITE_DATA;
+    }
 
-    _delay_ms(1); // Dejo un aire al pequenio chuk
-
-    I2C_start();
-    I2C_connect_address(NUN_ADDRESS, I2C_READ);
+    if (I2C_start() != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_START;
+    }
+    if (I2C_connect_address(NUN_ADDRESS, I2C_READ) != I2C_ERROR_OK){
+        I2C_stop();
+        return NUN_ERROR_CONNECT;
+    }
 
     for (int i = 0; i < NUN_DATA_SIZE - 1; i++){
         read_buffer[i] = I2C_read_ACK();
@@ -72,9 +100,10 @@ void NUN_get_raw(uint8_t read_buffer[NUN_DATA_SIZE]){
 
     I2C_stop();
 
+    return NUN_ERROR_OK;
 }
 
-void NUN_get_joystick(uint8_t joy_position[2]){
+NUN_ERROR_e NUN_get_joystick(uint8_t joy_position[2]){
     uint8_t buf[NUN_DATA_SIZE];
     NUN_get_raw(buf);
 
@@ -83,12 +112,14 @@ void NUN_get_joystick(uint8_t joy_position[2]){
     joy_position[0] = buf[0];
     joy_position[1] = buf[1];
 
+    return NUN_ERROR_OK;
 }
 
-uint8_t NUN_get_buttons(){
+NUN_ERROR_e NUN_get_buttons(uint8_t *buttons){
 
     uint8_t buf[NUN_DATA_SIZE] = {0};
     NUN_get_raw(buf);
 
-    return (buf[5] & 0x03); // bit 0 y 1 del valor retornado corresponden a Z y C respectivamente.
+    *buttons = (buf[5] & 0x03); // bit 0 y 1 del valor retornado corresponden a Z y C respectivamente.
+    return NUN_ERROR_OK;
 }

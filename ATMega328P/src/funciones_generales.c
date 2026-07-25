@@ -1,4 +1,23 @@
 #include "funciones_generales.h"
+#include <stdio.h>
+#include "drivers/UART.h"
+#include "devices/MG996R.h"
+
+void TIMER0_init_1ms(void){
+
+	/*
+	TIMER = 0
+	MODO = CTC
+	PRESCALER = 64 (f = 250kHz)
+	COMPARADOR = OCR0A = 249 -> interrupcion cada 1 ms
+	*/
+
+	TCCR0A = (1 << WGM01);
+	TCCR0B = (1 << CS01) | (1 << CS00);
+	OCR0A = 249;
+	TCNT0 = 0;
+	TIMSK0 = (1 << OCIE0A);
+}
 
 void ADC_sweep(uint16_t vector[6]) {	
 
@@ -167,4 +186,61 @@ void DEBUG_init(){
 void DEBUG_led_toggle(){
 	PORTB ^= (1 << PB5);
 }
+
+void DEBUG_led_on(){
+	PORTB |= (1 << PB5);
+}
+
+void DEBUG_led_off(){
+	PORTB &= ~(1 << PB5);
+}
 	
+void procesar_joystick(uint8_t *buf, size_t len){
+
+	if (len < 6) return; // need full nunchuk packet
+
+	// Esta funcion procesa los datos crudos del nunchuk y calcula los angulos de los servos.
+	// Los angulos se devuelven en decimas de grado (0-1800).
+
+	// El rango de valores del joystick es de un entero con signo de 8 bits, (-128 a 127). Se mapea a un rango de 0-1800.
+	// Se invierte el eje Y para que el movimiento hacia arriba sea positivo.
+	// Se manejan los botones tambien 
+
+	#ifdef DEBUG_PROCESAR_JOYSTICK
+		static char buffer[10];
+	#endif
+
+	static int16_t x_angulo = 0;
+	static int16_t y_angulo = 0;
+
+	static int8_t boton_c = 0;
+	// static int8_t boton_z = 0;
+
+	// boton_z = ((buf[5] >> 1) & 1);
+	boton_c = 2 * (((~(buf[5]) >> 1) & 1));
+
+#ifdef DEBUG_PROCESAR_JOYSTICK
+	static char buffer[10];
+	sprintf(buffer, "%d\r\n", boton_c);
+	USART_putstring(buffer);
+#endif
+
+	y_angulo += (((int16_t)(buf[1]) - 128) >> (1 + boton_c));
+	if (y_angulo < 0) y_angulo = 0;
+	else if (y_angulo > 899) y_angulo = 899;
+    
+	x_angulo -= (((int16_t)(buf[0]) - 128) >> (1 + boton_c));
+	if (x_angulo < 0) x_angulo = 0;
+	else if (x_angulo > 1799) x_angulo = 1799;
+
+	SERVO_set_angulo(x_angulo, SERVO_HOR);
+	SERVO_set_angulo(y_angulo, SERVO_VER);
+
+#ifdef DEBUG_PROCESAR_JOYSTICK
+	sprintf(buffer, "%d\r\n", x_angulo);   // decimal
+	USART_putstring(buffer);
+	sprintf(buffer, "%d\r\n", y_angulo);   // decimal
+	USART_putstring(buffer);
+#endif
+
+}

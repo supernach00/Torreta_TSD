@@ -4,10 +4,13 @@
 
 // Includes
 #include <stdint.h>
+#include <stddef.h>
 #include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 // Constantes
+
+// #define DEBUG_PROCESAR_JOYSTICK
 
 typedef enum {
 
@@ -21,10 +24,13 @@ typedef enum {
 //Debug
 void DEBUG_init();
 void DEBUG_led_toggle();
+void DEBUG_led_on();
+void DEBUG_led_off();
 
 //inits
 void ADC_init(void); // Inicializa el ADC para leer el pin ADC5 (A5) con referencia de 5V y un prescaler de 128.
 void PWM_TIM1_init(uint16_t period); // Configura el Timer1 para generar una señal PWM en el pin PB1 con un periodo pasado como argumento (en ms).
+void TIMER0_init_1ms(void); // Configura Timer0 para generar una interrupcion cada 1 ms.
 
 //GPIOS
 error_f_t GPIO_PORTD_IT_init(uint8_t); // Configura un pin de PORTD como entrada con pull-up y habilita la interrupción por cambio de pin para ese pin específico. Retorna ERROR_NOT_PORTD si el pin no es válido.
@@ -38,5 +44,9 @@ void PWM_set_DC(uint16_t duty_cycle); // Configura el ciclo de trabajo de la se�
 	
 // Conversion
 uint16_t volts_to_D(uint16_t tension);
+
+// Procesamiento de datos
+// Recibe el buffer crudo del nunchuk y su longitud. El caller controla el tamaño.
+void procesar_joystick(uint8_t *buf, size_t len);
 
 #endif /* FUNCIONES_GENERALES_H_ */

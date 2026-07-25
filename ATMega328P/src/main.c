@@ -27,64 +27,61 @@
 #include "devices/nunchuk.h"
 #include "devices/vl53l0x.h"
 
+// Variables globales
+
+volatile uint8_t flag_20ms = 0;
+// int8_t x_angulo = 0;
+// int8_t y_angulo = 0;
+
 ISR(TIMER2_COMPA_vect) 
 {
 
 }
 
-ISR(PCINT2_vect) { // Interrupción cuando se presiona el switch 1 (PD4)
-	
-    if (PIND & (1 << PD4)) {
-
-
-    } else {
-
-    }
-
-};
-
-ISR(INT1_vect) // Interrupción cuando se presiona el switch 2 (PD3)
+ISR(TIMER0_COMPA_vect) // Timer0 1 ms tick para base de tiempos
 {
+	static uint8_t contador_20ms = 0;
+	DEBUG_led_toggle();
 
-}
+	contador_20ms++;
+	if (contador_20ms >= 20) { 
+		contador_20ms = 0;
+		flag_20ms = 1;
+	}
 
-ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
-{
 
 }
 
 	int main(void)
 	{
 		
-		// PWM_TIM1_init(20);
-		// USART_init();
-		NUN_init();
-		sei();
-		// uint8_t buf[NUN_DATA_SIZE];
-		// NUN_get_raw(buf);
+		I2C_init();
 
-		// _delay_ms(5000);
+		while (NUN_init() != NUN_ERROR_OK){
+			DEBUG_led_toggle();
+			_delay_ms(100);
+		}
 
-		// if (buf[0] != 0 || buf[1] != 0 || buf[2] != 0 || buf[3] != 0 || buf[4] != 0 || buf[5] != 0){
-		// 	USART_putstring("Nunchuk data received:\n");
-		// 	for (int i = 0; i < NUN_DATA_SIZE; i++){
-		// 		char str[4];
-		// 		sprintf(str, "%d ", buf[i]);
-		// 		USART_putstring(str);
-		// 	}
-		// 	USART_putstring("\n");
-		// }
-
+		USART_init();
+		TIMER0_init_1ms();
+		PWM_TIM1_init(SERVO_PERIODO_ms); // Configuroo el timer1 para generar una señal PWM con un periodo de 20ms (50Hz) en el pin PB1.1
 		DEBUG_init();
+
+		sei();
+
+		uint8_t buffer_nunchuk[NUN_DATA_SIZE];
+
 		while (1)
 		{
 
+			if (flag_20ms) {
+				flag_20ms = 0;
 
-		DEBUG_led_toggle();
-		_delay_ms(1000);
-		// NUN_get_raw(buf);
-		// I2C_start();
-		// I2C_connect_address(NUN_ADDRESS, I2C_WRITE);
+				NUN_get_raw(buffer_nunchuk);
+				procesar_joystick(buffer_nunchuk, NUN_DATA_SIZE);
+
+			}
+
 		}
 
 		return 0;

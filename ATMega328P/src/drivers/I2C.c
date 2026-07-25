@@ -45,14 +45,49 @@ I2C_ERROR_e I2C_start(void){
     // Esperar fin
     while(!(TWCR & (1 << TWINT))); // No tengo que tocar el flag de TWINT!!!
 
-    // Manejo de error
-    if ((TWSR & 0xF8) != 0x08){
-
+    // Manejo de error: aceptar START normal y repeated START
+    uint8_t status = TWSR & 0xF8;
+    if (status != START_OK && status != REPEATED_START_OK){
         return I2C_ERROR_START;
-   
     }
 
     return I2C_ERROR_OK;
+}
+
+I2C_ERROR_e I2C_scan(uint8_t *found_address){
+
+    if (found_address != 0){
+        *found_address = 0;
+    }
+
+    // El LED de debug solo se enciende cuando hay deteccion.
+    DDRB |= (1 << PB5);
+    PORTB &= ~(1 << PB5);
+
+    // Rango valido de 7-bit address: 0x08 a 0x77.
+    for (uint8_t address = 0x08; address <= 0x77; address++){
+
+        if (I2C_start() != I2C_ERROR_OK){
+            I2C_stop();
+            continue;
+        }
+
+        if (I2C_connect_address(address, I2C_WRITE) == I2C_ERROR_OK){
+            I2C_stop();
+
+            if (found_address != 0){
+                *found_address = address;
+            }
+
+            PORTB ^= (1 << PB5);
+            return I2C_ERROR_OK;
+        }
+
+        I2C_stop();
+    }
+
+    return I2C_ERROR_NOT_FOUND;
+
 }
 
 I2C_ERROR_e I2C_connect_address(uint8_t address, I2C_RW_e rw){
@@ -68,15 +103,18 @@ I2C_ERROR_e I2C_connect_address(uint8_t address, I2C_RW_e rw){
 
     //Verifico el ACK y manejo errores según si es escritura o lectura
     uint8_t status = TWSR & 0xF8;
+
     if (rw == I2C_WRITE){
-        if (status != 0x18){ // SLA+W transmitted, ACK received
+        if (status != SLA_W_ACK){ // SLA+W transmitted, ACK received
             return I2C_ERROR_WRITE_ADDRESS;
         }
     } else {
-        if (status != 0x40){ // SLA+R transmitted, ACK received
+        if (status != SLA_R_ACK){ // SLA+R transmitted, ACK received
             return I2C_ERROR_READ_ADDRESS;
         }
     }
+
+    PORTB |= (1 << PB5); // Enciendo el LED de debug para indicar que se conecto a un dispositivo.
 
     return I2C_ERROR_OK;
 }
@@ -91,7 +129,7 @@ I2C_ERROR_e I2C_write(uint8_t data){
 
     while(!(TWCR & (1 << TWINT))); // Poll, no tocar el flag de TWINT!!!
 
-    if ( (TWSR & 0xF8) != 0x28 ){ //Checkeo el status register para ver si el dato se envio correctamente, maskeo bits del prescaler.
+    if ( (TWSR & 0xF8) != DATA_T_ACK ){ //Checkeo el status register para ver si el dato se envio correctamente, maskeo bits del prescaler.
         
         return I2C_ERROR_WRITE;
 
