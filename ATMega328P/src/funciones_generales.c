@@ -1,7 +1,15 @@
 #include "funciones_generales.h"
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
 #include "drivers/UART.h"
 #include "devices/MG996R.h"
+
+extern volatile int16_t x_angulo;
+extern volatile int16_t y_angulo;
+extern volatile estado_t estado_actual;
 
 void TIMER0_init_1ms(void){
 
@@ -194,30 +202,115 @@ void DEBUG_led_on(){
 void DEBUG_led_off(){
 	PORTB &= ~(1 << PB5);
 }
-	
+
+void procesar_error(error_distancia_t error){
+
+	#define K 0.1
+	#define PI 3.14159265f
+	#define RAD 1800 / PI // Conversor de rad a decigrados
+
+	error = error;
+
+	// float xk = (float)(error.x) * K;
+	// float yk = (float)(error.y) * K;
+
+	// double y_aux = (double)(y_angulo);
+
+	// y_aux = y_aux + RAD*( (xk*xk) / (2*tan(y_aux/RAD)) - yk );
+
+	// y_angulo = (int16_t)(y_aux);
+
+	// float aux = (2 + xk*xk + yk*yk) * sin(y_aux / RAD);
+
+	// x_angulo = x_angulo - (int16_t)(RAD*( (2*xk) / (aux) ));
+
+	x_angulo = x_angulo - error.x * K;
+	y_angulo = y_angulo - error.y * K;
+
+}
+
+error_distancia_t get_error(void)
+{
+    error_distancia_t error;
+
+    char buffer[8];
+    uint8_t i = 0;
+    char c;
+
+
+    // Esperar inicio de paquete
+    do
+    {
+        c = USART_receive();
+
+    } while(c != '<');
+
+
+
+    // Leer X
+    i = 0;
+
+    while(1)
+    {
+        c = USART_receive();
+
+        if(c == ',')
+            break;
+
+        if(i < sizeof(buffer)-1)
+            buffer[i++] = c;
+    }
+
+    buffer[i] = '\0';
+
+    error.x = atoi(buffer);
+
+
+
+    // Leer Y
+    i = 0;
+
+    while(1)
+    {
+        c = USART_receive();
+
+        if(c == '>')
+            break;
+
+        if(i < sizeof(buffer)-1)
+            buffer[i++] = c;
+    }
+
+    buffer[i] = '\0';
+
+    error.y = atoi(buffer);
+
+
+    return error;
+}
+
 void procesar_joystick(uint8_t *buf, size_t len){
 
 	if (len < 6) return; // need full nunchuk packet
 
-	// Esta funcion procesa los datos crudos del nunchuk y calcula los angulos de los servos.
-	// Los angulos se devuelven en decimas de grado (0-1800).
+	/* 
+	 Esta funcion procesa los datos crudos del nunchuk y calcula los angulos de los servos.
+	 Los angulos se devuelven en decimas de grado (0-1800).
 
-	// El rango de valores del joystick es de un entero con signo de 8 bits, (-128 a 127). Se mapea a un rango de 0-1800.
-	// Se invierte el eje Y para que el movimiento hacia arriba sea positivo.
-	// Se manejan los botones tambien 
+	 El rango de valores del joystick es de un entero con signo de 8 bits, (-128 a 127). Se mapea a un rango de 0-1800.
+	 Se invierte el eje Y para que el movimiento hacia arriba sea positivo.
+	 Se manejan los botones tambien  
+	*/
 
 	#ifdef DEBUG_PROCESAR_JOYSTICK
 		static char buffer[10];
 	#endif
 
-	static int16_t x_angulo = 0;
-	static int16_t y_angulo = 0;
-
 	static int8_t boton_c = 0;
-	// static int8_t boton_z = 0;
+	static int8_t boton_z = 0;
 
-	// boton_z = ((buf[5] >> 1) & 1);
-	boton_c = 2 * (((~(buf[5]) >> 1) & 1));
+	boton_z = (buf[5] & 1);
+	boton_c = (((~(buf[5]) >> 1) & 1));
 
 #ifdef DEBUG_PROCESAR_JOYSTICK
 	static char buffer[10];
@@ -225,11 +318,16 @@ void procesar_joystick(uint8_t *buf, size_t len){
 	USART_putstring(buffer);
 #endif
 
-	y_angulo += (((int16_t)(buf[1]) - 128) >> (1 + boton_c));
+	if (!boton_z) {
+    estado_actual = AUTOMATICO;
+	DEBUG_led_toggle();
+	}
+
+	y_angulo += (((int16_t)(buf[1]) - 128) >> (2 + boton_c));
 	if (y_angulo < 0) y_angulo = 0;
 	else if (y_angulo > 899) y_angulo = 899;
     
-	x_angulo -= (((int16_t)(buf[0]) - 128) >> (1 + boton_c));
+	x_angulo -= (((int16_t)(buf[0]) - 128) >> (2 + boton_c));
 	if (x_angulo < 0) x_angulo = 0;
 	else if (x_angulo > 1799) x_angulo = 1799;
 
@@ -242,5 +340,42 @@ void procesar_joystick(uint8_t *buf, size_t len){
 	sprintf(buffer, "%d\r\n", y_angulo);   // decimal
 	USART_putstring(buffer);
 #endif
+
+}
+
+void procesar_boton_z(uint8_t *buf, size_t len){
+
+	if (len < 6) return; // need full nunchuk packet
+
+	/* 
+	 Esta funcion procesa los datos crudos del nunchuk y calcula los angulos de los servos.
+	 Los angulos se devuelven en decimas de grado (0-1800).
+
+	 El rango de valores del joystick es de un entero con signo de 8 bits, (-128 a 127). Se mapea a un rango de 0-1800.
+	 Se invierte el eje Y para que el movimiento hacia arriba sea positivo.
+	 Se manejan los botones tambien  
+	*/
+
+	#ifdef DEBUG_PROCESAR_JOYSTICK
+		static char buffer[10];
+	#endif
+
+	static int8_t boton_z = 0;
+
+	boton_z = (buf[5] & 1);
+
+	if (boton_z) {
+    estado_actual = MANUAL;
+	DEBUG_led_toggle();
+	}
+
+	if (y_angulo < 0) y_angulo = 0;
+	else if (y_angulo > 899) y_angulo = 899;
+
+	if (x_angulo < 0) x_angulo = 0;
+	else if (x_angulo > 1799) x_angulo = 1799;
+
+	SERVO_set_angulo(x_angulo, SERVO_HOR);
+	SERVO_set_angulo(y_angulo, SERVO_VER);
 
 }

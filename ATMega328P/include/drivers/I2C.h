@@ -1,10 +1,7 @@
 #ifndef I2C_H_
 #define I2C_H_
 
-/*
-Utiliza los pines PC4 y PC5
-
-*/
+/* Utiliza los pines PC4 y PC5 */
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -49,9 +46,11 @@ I2C_ERROR_e I2C_init(void);
 I2C_ERROR_e I2C_write(uint8_t data);
 I2C_ERROR_e I2C_start(void);
 I2C_ERROR_e I2C_scan(uint8_t *found_address);
-void I2C_stop(void);
 I2C_ERROR_e I2C_connect_address(uint8_t address, I2C_RW_e rw);
+
 uint8_t I2C_read_ACK(void);
 uint8_t I2C_read_NACK(void);
+
+void I2C_stop(void);
 
 #endif /* I2C_H_ */

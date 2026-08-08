@@ -1,5 +1,6 @@
 #include "devices/nunchuk.h"
 
+// extern uint8_t debug_flag;
 
 NUN_ERROR_e NUN_init(){
 
@@ -55,14 +56,6 @@ NUN_ERROR_e NUN_init(){
 
     #endif
 
-    // Realizo una primer lectura para verificar funcionamiento
-
-    // The read process consists of writing a 0 and then reading 6 bytes of data.
-    // Send this command to get all sensor data and store into the 6-byte register within Nunchuk
-    // controller. This must be executed before reading data from the Nunchuk
-    // uint8_t buf[NUN_DATA_SIZE];
-    // NUN_get_raw(buf);
-
     return NUN_ERROR_OK;
 }
 
@@ -74,7 +67,7 @@ NUN_ERROR_e NUN_get_raw(uint8_t read_buffer[NUN_DATA_SIZE]){
         I2C_stop();
         return NUN_ERROR_START;
     }
-    
+
     if (I2C_connect_address(NUN_ADDRESS, I2C_WRITE) != I2C_ERROR_OK){
         I2C_stop();
         return NUN_ERROR_CONNECT;

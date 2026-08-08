@@ -1,18 +1,7 @@
 #include "drivers/I2C.h"
-
-// #define I2C_TIMEOUT_CYCLES 65000UL
-
-// static uint8_t I2C_wait_twint(void){
-//     uint32_t timeout = I2C_TIMEOUT_CYCLES;
-//     while (!(TWCR & (1 << TWINT))){
-//         if (timeout-- == 0){
-//             return 0;
-//         }
-//     }
-//     return 1;
-// }
-
 // TODO: Agregar una funcion de manejor de errores y definir codigos con enums.
+
+/* Pines de salida i2c en arduino uno*/
 //SDA = A4
 //SCL = A5
 

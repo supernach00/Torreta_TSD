@@ -12,11 +12,33 @@
 
 // #define DEBUG_PROCESAR_JOYSTICK
 
+
 typedef enum {
 
 	ERROR_NOT_PORTD,
 
 }error_f_t;
+
+typedef enum {
+
+	MANUAL,
+	AUTOMATICO
+
+}estado_t;
+
+typedef struct {
+
+	int16_t x;
+	int16_t y;
+
+}error_distancia_t;
+
+typedef struct {
+
+	uint16_t vertical;
+	uint16_t horizontal;
+
+}nuevo_angulo_t;
 
 #define A 16000.0 / (5.0*1000.0)
 #define C  4.88 // C = 5000mV / 1024;
@@ -47,6 +69,9 @@ uint16_t volts_to_D(uint16_t tension);
 
 // Procesamiento de datos
 // Recibe el buffer crudo del nunchuk y su longitud. El caller controla el tamaño.
+void procesar_boton_z(uint8_t *buf, size_t len);
 void procesar_joystick(uint8_t *buf, size_t len);
+void procesar_error(error_distancia_t);
+error_distancia_t get_error(void); // Bloquante
 
 #endif /* FUNCIONES_GENERALES_H_ */
