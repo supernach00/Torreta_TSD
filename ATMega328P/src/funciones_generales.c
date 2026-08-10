@@ -10,6 +10,8 @@
 extern volatile int16_t x_angulo;
 extern volatile int16_t y_angulo;
 extern volatile estado_t estado_actual;
+extern volatile uint16_t contador_WD;
+extern volatile uint8_t flag_WD;
 
 void TIMER0_init_1ms(void){
 
@@ -205,7 +207,8 @@ void DEBUG_led_off(){
 
 void procesar_error(error_distancia_t error){
 
-	#define K 0.1
+	#define K 0.001
+	#define K2 24
 	#define PI 3.14159265f
 	#define RAD 1800 / PI // Conversor de rad a decigrados
 
@@ -214,18 +217,18 @@ void procesar_error(error_distancia_t error){
 	// float xk = (float)(error.x) * K;
 	// float yk = (float)(error.y) * K;
 
-	// double y_aux = (double)(y_angulo);
+	// double y_aux = (double)(y_angulo)/ RAD;
 
-	// y_aux = y_aux + RAD*( (xk*xk) / (2*tan(y_aux/RAD)) - yk );
+	// y_aux = y_aux - (xk*xk) / (2* tan(y_aux)) + yk ;
 
-	// y_angulo = (int16_t)(y_aux);
+	// y_angulo = (int16_t)(y_aux) * RAD;
 
-	// float aux = (2 + xk*xk + yk*yk) * sin(y_aux / RAD);
+	// float aux = (2 + xk*xk + yk*yk) * sin(y_aux);
 
 	// x_angulo = x_angulo - (int16_t)(RAD*( (2*xk) / (aux) ));
 
-	x_angulo = x_angulo - error.x * K;
-	y_angulo = y_angulo - error.y * K;
+	x_angulo = x_angulo - (error.x / K2);
+	y_angulo = y_angulo + (error.y / K2);
 
 }
 
@@ -237,15 +240,20 @@ error_distancia_t get_error(void)
     uint8_t i = 0;
     char c;
 
+	error.x = 0;
+	error.y = 0;
+
+	contador_WD = 0;
+	flag_WD = 0;
 
     // Esperar inicio de paquete
     do
     {
         c = USART_receive();
 
-    } while(c != '<');
+    } while((c != '<') && !flag_WD);
 
-
+	if (flag_WD) return error;
 
     // Leer X
     i = 0;
@@ -254,12 +262,14 @@ error_distancia_t get_error(void)
     {
         c = USART_receive();
 
-        if(c == ',')
+        if((c == ',') || flag_WD)
             break;
 
         if(i < sizeof(buffer)-1)
             buffer[i++] = c;
     }
+
+	if (flag_WD) return error;
 
     buffer[i] = '\0';
 
@@ -274,12 +284,18 @@ error_distancia_t get_error(void)
     {
         c = USART_receive();
 
-        if(c == '>')
+        if((c == '>') || flag_WD)
             break;
 
         if(i < sizeof(buffer)-1)
             buffer[i++] = c;
     }
+
+	if (flag_WD)
+	{
+		error.x =0;
+		return error;
+	}
 
     buffer[i] = '\0';
 
@@ -287,6 +303,25 @@ error_distancia_t get_error(void)
 
 
     return error;
+}
+
+// mueve la camara 0.1 radianes en horizontal o vertical
+// durante la etapa de pruebas para calcular la constante K
+
+extern uint8_t flag_1seg;
+
+void debug_0_1RAD(int8_t boton_c)
+{
+	if (flag_1seg)
+	{
+		flag_1seg = 0;
+		if (boton_c == 0)
+		{
+			x_angulo += RAD * 0.1;
+		} else {
+			y_angulo += RAD * 0.1;
+		}
+	}
 }
 
 void procesar_joystick(uint8_t *buf, size_t len){
@@ -320,6 +355,7 @@ void procesar_joystick(uint8_t *buf, size_t len){
 
 	if (!boton_z) {
     estado_actual = AUTOMATICO;
+	// debug_0_1RAD(boton_c);
 	DEBUG_led_toggle();
 	}
 

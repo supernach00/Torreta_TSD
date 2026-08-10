@@ -37,6 +37,9 @@ volatile int16_t y_angulo = 0;
 
 volatile uint8_t debug_flag = 0;
 
+volatile uint16_t contador_WD = 0;
+volatile uint8_t flag_WD = 0;
+
 /* Rutinas de interrupciones */
 
 ISR(TIMER2_COMPA_vect) 
@@ -61,6 +64,18 @@ ISR(TIMER0_COMPA_vect) // Timer0 1 ms tick para base de tiempos
 		flag_20ms = 1;
 	}
 
+	if (estado_actual == AUTOMATICO)
+	{
+		contador_WD++;
+		uint8_t buffer_nunchuk[NUN_DATA_SIZE];
+		if (contador_WD >= 1000)
+		{
+			contador_WD = 0;
+			NUN_get_raw(buffer_nunchuk);
+			procesar_boton_z(buffer_nunchuk,NUN_DATA_SIZE);
+			if (estado_actual == MANUAL) flag_WD = 1;
+		}
+	}
 }
 
 int main(void)
@@ -92,12 +107,12 @@ int main(void)
 	while (1)
 	{
 
-		if (flag_1seg){
+		// if (flag_1seg){
 
-			flag_1seg = 0;
-			// DEBUG_led_toggle();
+		// 	flag_1seg = 0;
+		// 	// DEBUG_led_toggle();
 
-		}
+		// }
 
 		switch(estado_actual){
 

@@ -18,15 +18,17 @@ void USART_init(void)
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 }
 
+extern volatile uint8_t flag_WD;
+
 void USART_send(unsigned char data) {
 	// Esperar hasta que el buffer de transmisi�n est� vac�o
-	while (!(UCSR0A & (1 << UDRE0)));
+	while ((!(UCSR0A & (1 << UDRE0))));
 	UDR0 = data;
 }
 
 unsigned char USART_receive(void) {
 	// Esperar hasta que llegue un dato
-	while (!(UCSR0A & (1 << RXC0)));
+	while ((!(UCSR0A & (1 << RXC0))) && !flag_WD);
 	return UDR0;
 }
 
